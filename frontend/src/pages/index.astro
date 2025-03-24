@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="ChatGPT Clone">
+  <div class="min-h-screen flex items-center justify-center">
+    <div class="text-center">
+      <h1 class="text-4xl font-bold mb-4">Welcome to ChatGPT Clone</h1>
+      <p class="text-gray-600 mb-8">Please wait while we check your authentication status...</p>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  async function checkAuth() {
+    try {
+      const response = await fetch('/api/me');
+      if (response.ok) {
+        window.location.href = '/chat';
+      } else {
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      window.location.href = '/login';
+    }
+  }
+
+  checkAuth();
+</script> 

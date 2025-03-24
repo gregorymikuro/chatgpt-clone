@@ -1,0 +1,136 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Chat - ChatGPT Clone">
+  <div class="flex flex-col h-screen">
+    <header class="bg-white shadow">
+      <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold">ChatGPT Clone</h1>
+        <button
+          id="logoutBtn"
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <main class="flex-1 container mx-auto px-4 py-4 overflow-y-auto">
+      <div id="messages" class="space-y-4">
+        <!-- Messages will be inserted here -->
+      </div>
+    </main>
+
+    <footer class="bg-white border-t">
+      <div class="container mx-auto px-4 py-4">
+        <form id="messageForm" class="flex space-x-4">
+          <input
+            type="text"
+            id="messageInput"
+            name="message"
+            placeholder="Type your message..."
+            required
+            class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+          <button
+            type="submit"
+            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Send
+          </button>
+        </form>
+      </div>
+    </footer>
+  </div>
+</Layout>
+
+<script>
+  // Check if user is logged in
+  async function checkAuth() {
+    try {
+      const response = await fetch('/api/me');
+      if (!response.ok) {
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      window.location.href = '/login';
+    }
+  }
+
+  // Load chat history
+  async function loadMessages() {
+    try {
+      const response = await fetch('/api/history');
+      if (response.ok) {
+        const messages = await response.json();
+        const messagesContainer = document.getElementById('messages');
+        if (messagesContainer) {
+          messagesContainer.innerHTML = messages
+            .map(
+              (msg) => `
+                <div class="flex ${msg.is_user ? 'justify-end' : 'justify-start'}">
+                  <div class="max-w-[70%] rounded-lg px-4 py-2 ${
+                    msg.is_user
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-200 text-gray-900'
+                  }">
+                    ${msg.text}
+                  </div>
+                </div>
+              `
+            )
+            .join('');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  }
+
+  // Send message
+  document.getElementById('messageForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('messageInput') as HTMLInputElement;
+    const message = input.value.trim();
+    if (!message) return;
+
+    try {
+      const response = await fetch('/api/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      if (response.ok) {
+        input.value = '';
+        loadMessages();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
+    }
+  });
+
+  // Logout
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    try {
+      const response = await fetch('/api/logout');
+      if (response.ok) {
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  });
+
+  // Initial load
+  checkAuth();
+  loadMessages();
+</script> 

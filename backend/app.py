@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from extensions import db, login_manager, cors
 from dotenv import load_dotenv
 import os
@@ -31,6 +31,13 @@ from models import User, Message
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+@app.route('/')
+def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'message': 'ChatGPT Clone API is running'
+    })
 
 # Create database tables
 with app.app_context():
